@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>历史人物·史迹配对｜计时挑战</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            user-select: none;
+        }
+
+        body {
+            background: linear-gradient(145deg, #1e3c2c 0%, #2a4a35 100%);
+            font-family: 'Segoe UI', 'Roboto', 'Noto Sans', system-ui, -apple-system, '微软雅黑', sans-serif;
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 24px 16px;
+        }
+
+        .game-container {
+            max-width: 1600px;
+            width: 100%;
+            background: rgba(255,248,225,0.94);
+            border-radius: 56px;
+            box-shadow: 0 25px 45px rgba(0,0,0,0.3), inset 0 1px 2px rgba(255,255,255,0.6);
+            padding: 20px 24px 32px;
+            backdrop-filter: blur(2px);
+            transition: all 0.2s;
+        }
+
+        .game-header {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 28px;
+            padding-bottom: 12px;
+            border-bottom: 3px solid #d4af7a;
+            gap: 15px;
+        }
+        h1 {
+            margin: 0;
+            font-size: 1.9rem;
+            background: linear-gradient(135deg, #2c5e2e, #c9863c);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+            text-shadow: 2px 2px 6px rgba(0,0,0,0.1);
+            letter-spacing: 1px;
+        }
+        .score-panel {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            background: #fef3da;
+            padding: 6px 20px;
+            border-radius: 60px;
+            box-shadow: inset 0 1px 3px #0001, 0 5px 10px rgba(0,0,0,0.05);
+            align-items: center;
+        }
+        .score-item {
+            font-weight: bold;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: baseline;
+            gap: 6px;
+            background: #fff2e2;
+            padding: 4px 14px;
+            border-radius: 40px;
+        }
+        .score-label {
+            font-size: 0.85rem;
+            font-weight: normal;
+            color: #5e3a1c;
+        }
+        .score-value {
+            color: #c75d1a;
+            font-size: 1.7rem;
+            font-weight: 800;
+            line-height: 1;
+        }
+        .timer-value {
+            font-family: monospace;
+            letter-spacing: 2px;
+        }
+        .message-area {
+            background: #2b2b2bdd;
+            backdrop-filter: blur(8px);
+            color: #ffefcf;
+            padding: 8px 18px;
+            border-radius: 40px;
+            font-weight: 500;
+            font-size: 0.9rem;
+            transition: 0.2s;
+        }
+        .reset-btn {
+            background: #f7b05e;
+            border: none;
+            font-size: 1.2rem;
+            font-weight: bold;
+            padding: 6px 24px;
+            border-radius: 40px;
+            cursor: pointer;
+            color: #2d3e1f;
+            transition: 0.2s;
+            box-shadow: 0 4px 6px #0002;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .reset-btn:hover {
+            background: #ffa33c;
+            transform: scale(0.97);
+            box-shadow: 0 2px 4px #0002;
+        }
+
+        .game-board {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-top: 15px;
+        }
+        .column {
+            flex: 1;
+            min-width: 280px;
+            background: #fef7e8;
+            border-radius: 40px;
+            padding: 18px 16px;
+            box-shadow: 0 12px 20px rgba(0,0,0,0.1);
+        }
+        .column h2 {
+            text-align: center;
+            font-size: 1.7rem;
+            margin-top: 0;
+            margin-bottom: 20px;
+            color: #5b3e1f;
+            border-left: 8px solid #db9f5c;
+            padding-left: 20px;
+        }
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+            gap: 18px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 28px;
+            padding: 14px 12px 16px;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            box-shadow: 0 8px 12px rgba(0,0,0,0.08);
+            border: 2px solid transparent;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+        .person-card {
+            background: linear-gradient(135deg, #fff2e0, #fff6ea);
+        }
+        .achievement-card {
+            background: linear-gradient(135deg, #eef4ff, #f9f3e6);
+        }
+        .card:hover:not(.card-disabled) {
+            transform: translateY(-5px);
+            box-shadow: 0 18px 24px -8px rgba(0,0,0,0.2);
+            border-color: #f3b36b;
+        }
+        .card-selected {
+            border: 3px solid #f39c12;
+            background: #fff1bf;
+            transform: scale(0.98);
+            box-shadow: 0 0 0 3px #ffd58c;
+        }
+        .card-disabled {
+            opacity: 0.55;
+            filter: grayscale(0.08);
+            cursor: default;
+            transform: none;
+            background: #ddcfb5;
+            box-shadow: inset 0 1px 4px #0001;
+            border-color: #c0aa7a;
+        }
+        .card-img {
+            width: 90px;
+            height: 90px;
+            border-radius: 50%;
+            object-fit: cover;
+            background: #e1cfb0;
+            box-shadow: 0 5px 10px rgba(0,0,0,0.1);
+            border: 2px solid #f0cf97;
+        }
+        .person-name {
+            font-weight: 800;
+            font-size: 1.2rem;
+            margin: 0;
+            color: #3e2a1b;
+        }
+        .achievement-text {
+            font-size: 0.85rem;
+            line-height: 1.4;
+            color: #2d3e2b;
+            margin: 0;
+            text-align: center;
+            font-weight: 500;
+            padding: 0 6px;
+            max-height: 85px;
+            overflow-y: auto;
+        }
+        .badge-matched {
+            font-size: 0.7rem;
+            background: #578b34;
+            color: white;
+            border-radius: 60px;
+            padding: 4px 12px;
+            margin-top: 4px;
+            display: inline-block;
+        }
+        .completed-tag {
+            font-size: 0.7rem;
+            margin-top: 6px;
+            background: #de9d48;
+            padding: 2px 8px;
+            border-radius: 30px;
+            color: white;
+        }
+        footer {
+            margin-top: 28px;
+            text-align: center;
+            font-size: 0.75rem;
+            color: #4f3e28;
+            background: #eedbad;
+            width: fit-content;
+            margin-left: auto;
+            margin-right: auto;
+            padding: 5px 18px;
+            border-radius: 60px;
+        }
+
+        @media (max-width: 780px) {
+            .game-container { padding: 16px; }
+            .cards-grid { grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 12px; }
+            .card-img { width: 70px; height: 70px; }
+            .person-name { font-size: 1rem; }
+            .achievement-text { font-size: 0.75rem; }
+            .score-value { font-size: 1.3rem; }
+            h1 { font-size: 1.4rem; }
+            .score-item { font-size: 1rem; padding: 2px 10px; }
+        }
+        @media (max-width: 600px) {
+            .column h2 { font-size: 1.3rem; }
+            .reset-btn { padding: 4px 16px; font-size: 1rem; }
+        }
+        button { background: none; border: none; font-family: inherit; }
+    </style>
+</head>
+<body>
+<div class="game-container" id="gameApp">
+    <div class="game-header">
+        <h1>📜 人物·史迹配对挑战</h1>
+        <div class="score-panel">
+            <div class="score-item"><span class="score-label">🏆 配对成功</span><span class="score-value" id="matchedCount">0</span><span class="score-label"> / 12</span></div>
+            <div class="score-item"><span class="score-label">⏱️ 用时</span><span id="timerDisplay" class="score-value timer-value">00:00</span></div>
+            <button class="reset-btn" id="resetGameBtn">🔄 洗牌重置</button>
+        </div>
+    </div>
+    <div class="message-area" id="globalMsg">✨ 点击人物，再点击史迹，正确配对！计时已开始</div>
+
+    <div class="game-board">
+        <div class="column">
+            <h2>🧑‍🎨 风云人物</h2>
+            <div class="cards-grid" id="peopleGrid"></div>
+        </div>
+        <div class="column">
+            <h2>📖 伟大史迹</h2>
+            <div class="cards-grid" id="achievementsGrid"></div>
+        </div>
+    </div>
+    <footer>⭐ 配对规则：单击人物卡片 + 单击史迹卡片，匹配正确则永久配对 | 计时从游戏重置后开始，全配对自动停止计时</footer>
+</div>
+
+<script>
+    // ---------- 人物数据 ----------
+    const PEOPLE_DATA = [
+        { id: 1, name: "哥倫布",   desc: "1492年发现美洲新大陆，开启大航海时代。" },
+        { id: 2, name: "張騫",     desc: "西汉出使西域，开辟丝绸之路，促进东西方文明交流。" },
+        { id: 3, name: "鑑真",     desc: "唐代东渡日本，传播佛教与大唐文化，建唐招提寺。" },
+        { id: 4, name: "貝多芬",   desc: "德国作曲家，失聪后创作《命运》《欢乐颂》，不朽乐圣。" },
+        { id: 5, name: "林肯",     desc: "美国第16任总统，废除奴隶制，颁布《解放黑人奴隶宣言》。" },
+        { id: 6, name: "袁隆平",   desc: "中国杂交水稻之父，培育杂交水稻，解决全球粮食问题。" },
+        { id: 7, name: "馬丁路德·金", desc: "美国民权领袖，发表《我有一个梦想》，争取种族平等。" },
+        { id: 8, name: "南丁格爾", desc: "近代护理学奠基人，改善战地医疗，创立护士学校。" },
+        { id: 9, name: "萊特兄弟", desc: "发明飞机，1903年完成首次可控动力飞行，开启航空时代。" },
+        { id: 10, name: "蘇格拉底", desc: "古希腊哲学家，苏格拉底反诘法，西方哲学奠基者。" },
+        { id: 11, name: "玄奘",    desc: "唐代高僧，西行印度取经，译经著《大唐西域记》。" },
+        { id: 12, name: "居禮夫人", desc: "放射性研究先驱，两获诺贝尔奖，发现钋和镭元素。" }
+    ];
+
+    const ACHIEVEMENTS_MAP = {
+        1: "🗺️ 1492年率领船队横渡大西洋，发现美洲新大陆，开启欧洲殖民与全球大航海时代。",
+        2: "🐫 奉汉武帝之命出使西域，历尽艰辛开拓丝绸之路，促进汉朝与西域各国交流。",
+        3: "🌸 六次东渡日本，最终成功抵达，传播佛学、医药及建筑，建唐招提寺，被尊为日本律宗初祖。",
+        4: "🎵 古典音乐巨匠，即使双耳失聪仍创作《英雄》《命运》《第九交响曲》，用音乐撼动世界。",
+        5: "⚖️ 美国内战期间发布《解放黑人奴隶宣言》，维护联邦统一，成为伟大总统。",
+        6: "🌾 毕生研究杂交水稻，使水稻亩产大幅提升，让亿万人远离饥饿，获共和国勋章。",
+        7: "✊ 领导蒙哥马利巴士抵制运动，1963年华盛顿大游行中发表《我有一个梦想》，推动民权法案。",
+        8: "🕯️ 克里米亚战争中率护士改善战地卫生，创立现代护理学，国际护士节纪念她。",
+        9: "✈️ 1903年驾驶“飞行者一号”成功试飞，实现人类首次可控动力飞行，航空先驱。",
+        10: "💬 通过诘问启发思考，提出“认识你自己”，影响柏拉图等后世哲学，被尊为希腊圣贤。",
+        11: "📿 西行五万里求法，带回佛经657部，翻译经论1335卷，记录西域风土《大唐西域记》。",
+        12: "⚛️ 与丈夫皮埃尔·居里发现钋和镭，首获诺贝尔物理学奖，又获化学奖，开创放射性治疗。"
+    };
+
+    function getAvatarUrl(name) {
+        let hash = 0;
+        for(let i = 0; i < name.length; i++) hash = ((hash<<5)-hash)+name.charCodeAt(i);
+        const hue = Math.abs(hash % 360);
+        return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=${hue},70,60&color=fff&size=100&rounded=true&bold=true&length=2&fontsize=0.45`;
+    }
+
+    // ---------- 计时器相关全局变量 ----------
+    let timerInterval = null;
+    let startTime = null;          // 开始时间戳 (毫秒)
+    let isGameCompleted = false;   // 是否已完成全部配对，完成后计时停止
+    const timerDisplaySpan = document.getElementById('timerDisplay');
+
+    // 格式化 mm:ss (最大 99:59)
+    function formatTime(seconds) {
+        const mins = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    }
+
+    // 更新计时器显示 (基于当前开始时间)
+    function updateTimerDisplay() {
+        if (!startTime || isGameCompleted) return;
+        const elapsedSec = Math.floor((Date.now() - startTime) / 1000);
+        timerDisplaySpan.innerText = formatTime(Math.min(elapsedSec, 3599)); // 最大99:59
+    }
+
+    // 启动计时器 (重置旧的)
+    function startTimer() {
+        if (timerInterval) clearInterval(timerInterval);
+        startTime = Date.now();
+        isGameCompleted = false;
+        timerDisplaySpan.innerText = "00:00";
+        timerInterval = setInterval(() => {
+            if (!isGameCompleted && startTime) {
+                updateTimerDisplay();
+            }
+        }, 200);
+    }
+
+    // 停止计时器并返回最终显示文本
+    function stopTimer() {
+        if (timerInterval) {
+            clearInterval(timerInterval);
+            timerInterval = null;
+        }
+        if (startTime && !isGameCompleted) {
+            // 最后一次更新显示最终值
+            updateTimerDisplay();
+        }
+    }
+
+    // 重置计时器 (用于游戏重置或初始化)
+    function resetTimerAndStart() {
+        stopTimer();
+        startTime = null;
+        isGameCompleted = false;
+        startTimer();
+    }
+
+    // 全部配对完成时调用 (停止计时，显示最终消息)
+    function finishGameWithTimer() {
+        if (!isGameCompleted) {
+            isGameCompleted = true;
+            stopTimer();
+            const finalTime = timerDisplaySpan.innerText;
+            showMessage(`🎉 历史大师！全配对成功！ 耗时 ${finalTime} 🎉`, false);
+        }
+    }
+
+    // ---------- 游戏核心状态 ----------
+    let peopleList = [];
+    let achievementsList = [];
+    let disabledPeopleIds = new Set();
+    let disabledAchievementIds = new Set();
+    let selectedCard = null;     // { type, id, personId }
+    let matchedPairs = 0;
+
+    const peopleGrid = document.getElementById('peopleGrid');
+    const achievementsGrid = document.getElementById('achievementsGrid');
+    const matchedCountSpan = document.getElementById('matchedCount');
+    const globalMsgDiv = document.getElementById('globalMsg');
+    const resetBtn = document.getElementById('resetGameBtn');
+
+    let msgTimeout = null;
+    function showMessage(msg, isError = false) {
+        if(msgTimeout) clearTimeout(msgTimeout);
+        globalMsgDiv.innerHTML = isError ? `❌ ${msg}` : `✨ ${msg}`;
+        if(isError) {
+            globalMsgDiv.style.background = "#b13e3edd";
+            globalMsgDiv.style.color = "#fff2e0";
+        } else {
+            globalMsgDiv.style.background = "#2b2b2bdd";
+            globalMsgDiv.style.color = "#ffefcf";
+        }
+        msgTimeout = setTimeout(() => {
+            if(matchedPairs === 12 && !isError) {
+                // 保持完成消息不覆盖
+                if(!globalMsgDiv.innerHTML.includes("全配对成功")) {
+                    globalMsgDiv.innerHTML = "🏆 完美通关！点重置可继续挑战 🏆";
+                }
+            } else {
+                globalMsgDiv.innerHTML = "💡 点击人物，再点史迹 (或者反过来) 配对即可";
+                globalMsgDiv.style.background = "#2b2b2bdd";
+                globalMsgDiv.style.color = "#ffefcf";
+            }
+        }, 2200);
+    }
+
+    function updateScoreUI() {
+        matchedCountSpan.innerText = matchedPairs;
+        if(matchedPairs === 12 && !isGameCompleted) {
+            finishGameWithTimer();
+        }
+    }
+
+    function clearSelectedHighlight() {
+        document.querySelectorAll('.card-selected').forEach(card => {
+            card.classList.remove('card-selected');
+        });
+    }
+
+    function highlightCard(cardElement) {
+        if(cardElement) cardElement.classList.add('card-selected');
+    }
+
+    // 配对成功逻辑
+    function matchSuccess(personId, achievementCardId, achievementItem) {
+        if(disabledPeopleIds.has(personId) || disabledAchievementIds.has(achievementCardId)) return false;
+        disabledPeopleIds.add(personId);
+        disabledAchievementIds.add(achievementCardId);
+        matchedPairs++;
+        updateScoreUI();
+        showMessage(`✔ 配对成功！ ${peopleList.find(p=>p.id===personId)?.name} 史迹吻合`, false);
+        if(selectedCard) {
+            selectedCard = null;
+            clearSelectedHighlight();
+        }
+        renderAllCards();
+        return true;
+    }
+
+    function matchFailed() {
+        showMessage("配对错误，再试试看！ 人物与史迹不匹配", true);
+        if(selectedCard) {
+            selectedCard = null;
+            clearSelectedHighlight();
+        }
+    }
+
+    function onPersonClick(personId, cardElement) {
+        if(disabledPeopleIds.has(personId)) {
+            showMessage("这位人物已经配对过了！", false);
+            return;
+        }
+        if(selectedCard && selectedCard.type === 'person') {
+            if(selectedCard.id === personId) {
+                selectedCard = null;
+                clearSelectedHighlight();
+                showMessage("已取消选中", false);
+                return;
+            } else {
+                clearSelectedHighlight();
+                selectedCard = { type: 'person', id: personId, personId: personId };
+                highlightCard(cardElement);
+                showMessage(`已选中：${peopleList.find(p=>p.id===personId)?.name} ，再点击对应史迹配对`, false);
+            }
+        } 
+        else if(selectedCard && selectedCard.type === 'achievement') {
+            const selectedAchievementId = selectedCard.id;
+            const achievementObj = achievementsList.find(ach => ach.id === selectedAchievementId);
+            if(!achievementObj || disabledAchievementIds.has(selectedAchievementId)) {
+                selectedCard = null;
+                clearSelectedHighlight();
+                onPersonClick(personId, cardElement);
+                return;
+            }
+            if(achievementObj.personId === personId) {
+                if(!disabledPeopleIds.has(personId) && !disabledAchievementIds.has(selectedAchievementId)) {
+                    matchSuccess(personId, selectedAchievementId, achievementObj);
+                } else {
+                    showMessage("其中一项已经配对过啦！", true);
+                    selectedCard = null;
+                    clearSelectedHighlight();
+                }
+            } else {
+                matchFailed();
+            }
+        }
+        else {
+            clearSelectedHighlight();
+            selectedCard = { type: 'person', id: personId, personId: personId };
+            highlightCard(cardElement);
+            showMessage(`已选中：${peopleList.find(p=>p.id===personId)?.name} ，点击正确的史迹卡片配对`, false);
+        }
+    }
+
+    function onAchievementClick(achievementId, cardElement) {
+        const achievement = achievementsList.find(a => a.id === achievementId);
+        if(!achievement) return;
+        if(disabledAchievementIds.has(achievementId)) {
+            showMessage("这段史迹已经配对过了！", false);
+            return;
+        }
+        if(selectedCard && selectedCard.type === 'achievement') {
+            if(selectedCard.id === achievementId) {
+                selectedCard = null;
+                clearSelectedHighlight();
+                showMessage("已取消选中", false);
+                return;
+            } else {
+                clearSelectedHighlight();
+                selectedCard = { type: 'achievement', id: achievementId, personId: achievement.personId };
+                highlightCard(cardElement);
+                showMessage(`已选中史迹片段，点击对应人物配对`, false);
+                return;
+            }
+        } 
+        else if(selectedCard && selectedCard.type === 'person') {
+            const selectedPersonId = selectedCard.id;
+            if(disabledPeopleIds.has(selectedPersonId)) {
+                showMessage("该人物已经配对，请刷新选择", true);
+                selectedCard = null;
+                clearSelectedHighlight();
+                return;
+            }
+            if(selectedPersonId === achievement.personId) {
+                if(!disabledAchievementIds.has(achievementId) && !disabledPeopleIds.has(selectedPersonId)) {
+                    matchSuccess(selectedPersonId, achievementId, achievement);
+                } else {
+                    showMessage("已经配对过了哦", true);
+                    selectedCard = null;
+                    clearSelectedHighlight();
+                }
+            } else {
+                matchFailed();
+            }
+        } 
+        else {
+            clearSelectedHighlight();
+            selectedCard = { type: 'achievement', id: achievementId, personId: achievement.personId };
+            highlightCard(cardElement);
+            showMessage(`已选中史迹，点击关联人物配对`, false);
+        }
+    }
+
+    function renderPeople() {
+        peopleGrid.innerHTML = '';
+        peopleList.forEach(person => {
+            const isDisabled = disabledPeopleIds.has(person.id);
+            const cardDiv = document.createElement('div');
+            cardDiv.className = `card person-card ${isDisabled ? 'card-disabled' : ''}`;
+            const img = document.createElement('img');
+            img.src = person.avatar;
+            img.alt = person.name;
+            img.className = 'card-img';
+            const nameSpan = document.createElement('p');
+            nameSpan.className = 'person-name';
+            nameSpan.innerText = person.name;
+            cardDiv.appendChild(img);
+            cardDiv.appendChild(nameSpan);
+            if(isDisabled) {
+                const matchedBadge = document.createElement('div');
+                matchedBadge.className = 'badge-matched';
+                matchedBadge.innerText = '✓ 已配对';
+                cardDiv.appendChild(matchedBadge);
+            }
+            if(!isDisabled) {
+                cardDiv.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    onPersonClick(person.id, cardDiv);
+                });
+            } else {
+                cardDiv.style.cursor = 'default';
+            }
+            peopleGrid.appendChild(cardDiv);
+        });
+    }
+
+    function renderAchievements() {
+        achievementsGrid.innerHTML = '';
+        achievementsList.forEach(ach => {
+            const isDisabled = disabledAchievementIds.has(ach.id);
+            const cardDiv = document.createElement('div');
+            cardDiv.className = `card achievement-card ${isDisabled ? 'card-disabled' : ''}`;
+            const textP = document.createElement('p');
+            textP.className = 'achievement-text';
+            textP.innerText = ach.text;
+            cardDiv.appendChild(textP);
+            if(isDisabled) {
+                const doneTag = document.createElement('div');
+                doneTag.className = 'completed-tag';
+                doneTag.innerText = '✔ 配对完成';
+                cardDiv.appendChild(doneTag);
+            }
+            if(!isDisabled) {
+                cardDiv.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    onAchievementClick(ach.id, cardDiv);
+                });
+            } else {
+                cardDiv.style.cursor = 'default';
+            }
+            achievementsGrid.appendChild(cardDiv);
+        });
+    }
+
+    function renderAllCards() {
+        renderPeople();
+        renderAchievements();
+        if(selectedCard) {
+            clearSelectedHighlight();
+            if(selectedCard.type === 'person') {
+                const personCards = document.querySelectorAll('#peopleGrid .card:not(.card-disabled)');
+                for(let card of personCards) {
+                    const nameElem = card.querySelector('.person-name');
+                    if(nameElem) {
+                        const personName = nameElem.innerText;
+                        const targetPerson = peopleList.find(p => p.id === selectedCard.id);
+                        if(targetPerson && targetPerson.name === personName) {
+                            highlightCard(card);
+                            break;
+                        }
+                    }
+                }
+            } else if(selectedCard.type === 'achievement') {
+                const achCards = document.querySelectorAll('#achievementsGrid .card:not(.card-disabled)');
+                for(let card of achCards) {
+                    const textElem = card.querySelector('.achievement-text');
+                    if(textElem) {
+                        const targetAch = achievementsList.find(a => a.id === selectedCard.id);
+                        if(targetAch && textElem.innerText === targetAch.text) {
+                            highlightCard(card);
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    function shuffleArray(arr) {
+        for(let i = arr.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [arr[i], arr[j]] = [arr[j], arr[i]];
+        }
+        return arr;
+    }
+
+    // 重置游戏 (全部重置 + 计时器重启)
+    function resetGame() {
+        // 重置配对数据
+        disabledPeopleIds.clear();
+        disabledAchievementIds.clear();
+        matchedPairs = 0;
+        selectedCard = null;
+        clearSelectedHighlight();
+        // 重置人物列表 (顺序固定)
+        peopleList = PEOPLE_DATA.map(p => ({
+            id: p.id,
+            name: p.name,
+            avatar: getAvatarUrl(p.name),
+            desc: p.desc
+        }));
+        // 重建并打乱事迹卡片
+        let uidCounter = 100;
+        const freshAchievements = [];
+        PEOPLE_DATA.forEach(person => {
+            freshAchievements.push({
+                id: uidCounter++,
+                personId: person.id,
+                text: ACHIEVEMENTS_MAP[person.id] || person.desc,
+                originName: person.name
+            });
+        });
+        achievementsList = shuffleArray([...freshAchievements]);
+        // 重置计时器 (停止旧计时，开启全新计时)
+        resetTimerAndStart();
+        // 更新UI分数
+        updateScoreUI();
+        // 重新渲染所有卡片
+        renderAllCards();
+        showMessage("游戏已重置，史迹顺序已打乱！计时重新开始", false);
+    }
+
+    // 初次启动
+    function initGame() {
+        resetGame();  // 初始重置，包含计时启动
+    }
+
+    resetBtn.addEventListener('click', () => {
+        resetGame();
+    });
+
+    initGame();
+</script>
+</body>
+</html>
